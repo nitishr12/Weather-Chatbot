@@ -21,16 +21,23 @@ def conv(conversation,type,flag,place):
         if response["intents"][0]["intent"].__eq__("weather_plain"):
             weather = Weather()
             type="temp"
-            send_url = 'http://freegeoip.net/json'
-            r = requests.get(send_url)
-            j = json.loads(r.text)
-            print('The weather at '+j['city']+' is '+weather.lookup_by_location(j['city']).condition()['temp'])
+            if place =="":
+                send_url = 'http://freegeoip.net/json'
+                r = requests.get(send_url)
+                j = json.loads(r.text)
+                print('The weather at '+j['city']+' is '+weather.lookup_by_location(j['city']).condition()['temp'])
+            else:
+                print('The weather at '+place+' is '+weather.lookup_by_location(place).condition()['temp'])
         elif response["intents"][0]["intent"].__eq__("weather_conditions"):
             weather = Weather()
             type="temp"
             if len(response["entities"])>0:
-                place=response["entities"][0]["value"]
-                print(response["output"]["text"][0]+weather.lookup_by_location(place).condition()['temp'])
+                
+                if(weather.lookup_by_location(response["entities"][0]["value"])==None): 
+                    print("Enter a name of some city")
+                else:
+                    place=response["entities"][0]["value"]
+                    print(response["output"]["text"][0]+weather.lookup_by_location(place).condition()['temp'])
             else:
                 if place =="":
                     send_url = 'http://freegeoip.net/json'
@@ -42,27 +49,42 @@ def conv(conversation,type,flag,place):
         elif response["intents"][0]["intent"].__eq__("general"):
             weather = Weather()
             type="general"
+            temp_flag=True
             conclusion=""
             if len(response["entities"])>0:
-                place=response["entities"][0]["value"]
+                if(weather.lookup_by_location(response["entities"][0]["value"])==None): 
+                    print("Enter a name of some city")
+                    temp_flag=False
+                else:
+                    place=response["entities"][0]["value"]
             else:
                 if place =="":
                     send_url = 'http://freegeoip.net/json'
                     r = requests.get(send_url)
                     j = json.loads(r.text)
                     place=j['city']
-            if "thunder" in weather.lookup_by_location(place).condition()['text'].lower() or "showers" in weather.lookup_by_location(place).condition()['text'].lower() or "breezy" in weather.lookup_by_location(place).condition()['text'].lower() or "windy" in weather.lookup_by_location(place).condition()['text'].lower() or "cloudy" in weather.lookup_by_location(place).condition()['text'].lower() or "rain" in weather.lookup_by_location(place).condition()['text'].lower() or "snow" in weather.lookup_by_location(place).condition()['text'].lower() or int(weather.lookup_by_location(place).condition()['temp'])<55:
-                conclusion="you need to"
-            else:
-                conclusion="you don't need to"
-            print(response["output"]["text"][0].replace('(condition)',weather.lookup_by_location(place).condition()['text']).replace('(place)',place).replace('(result)',conclusion))
+            if(temp_flag):
+                if "thunder" in weather.lookup_by_location(place).condition()['text'].lower() or "showers" in weather.lookup_by_location(place).condition()['text'].lower() or "breezy" in weather.lookup_by_location(place).condition()['text'].lower() or "windy" in weather.lookup_by_location(place).condition()['text'].lower() or "cloudy" in weather.lookup_by_location(place).condition()['text'].lower() or "rain" in weather.lookup_by_location(place).condition()['text'].lower() or "snow" in weather.lookup_by_location(place).condition()['text'].lower():
+                    conclusion="you need to"
+                    print(response["output"]["text"][0].replace('(condition)',weather.lookup_by_location(place).condition()['text']).replace('(place)',place).replace('(result)',conclusion))
 
+                else:
+                    if(int(weather.lookup_by_location(place).condition()['temp'])<55):
+                        conclusion="But the temperature is "+ weather.lookup_by_location(place).condition()['temp']+". Hence you need to"
+                        print(response["output"]["text"][0].replace('(condition)',weather.lookup_by_location(place).condition()['text']).replace('(place)',place).replace('Hence (result)',conclusion))
+                    else:
+                        conclusion="you don't need to"
+                        print(response["output"]["text"][0].replace('(condition)',weather.lookup_by_location(place).condition()['text']).replace('(place)',place).replace('(result)',conclusion))
+                
         elif response["intents"][0]["intent"].__eq__("title"):
             weather = Weather()
             type="title"
             if len(response["entities"])>0:
-                place=response["entities"][0]["value"]
-                print(response["output"]["text"][0].replace('(condition)',weather.lookup_by_location(place).condition()['text']))            
+                if(weather.lookup_by_location(response["entities"][0]["value"])==None): 
+                    print("Enter a name of some city")
+                else:
+                    place=response["entities"][0]["value"]
+                    print(response["output"]["text"][0].replace('(condition)',weather.lookup_by_location(place).condition()['text']))            
             else:
                 if place =="":
                     send_url = 'http://freegeoip.net/json'
@@ -75,8 +97,11 @@ def conv(conversation,type,flag,place):
             weather = Weather()
             type="humidity"
             if len(response["entities"])>0:
-                place=response["entities"][0]["value"]
-                print(response["output"]["text"][0]+" "+weather.lookup_by_location(place).atmosphere()['humidity'])
+                if(weather.lookup_by_location(response["entities"][0]["value"])==None): 
+                    print("Enter a name of some city")
+                else:
+                    place=response["entities"][0]["value"]
+                    print(response["output"]["text"][0]+" "+weather.lookup_by_location(place).atmosphere()['humidity'])
             else:
                 if place =="":
                     send_url = 'http://freegeoip.net/json'
@@ -90,7 +115,10 @@ def conv(conversation,type,flag,place):
             weather = Weather()
             type="forecast"
             if len(response["entities"])>0:
-                place=response["entities"][0]["value"]
+                if(weather.lookup_by_location(response["entities"][0]["value"])==None): 
+                    print("Enter a name of some city")
+                else:
+                    place=response["entities"][0]["value"]
             else:
                 if place =="":
                     send_url = 'http://freegeoip.net/json'
@@ -111,29 +139,49 @@ def conv(conversation,type,flag,place):
         weather = Weather()
         #print(type)
         if(type=="temp"):
-            place=response["entities"][0]["value"]
-            print("The weather at "+place+" is "+weather.lookup_by_location(place).condition()['temp'])
+            if(weather.lookup_by_location(response["entities"][0]["value"])==None): 
+                print("Enter a name of some city")
+            else:
+                place=response["entities"][0]["value"]
+                print("The weather at "+place+" is "+weather.lookup_by_location(place).condition()['temp'])
         elif(type=="title"):
-            place=response["entities"][0]["value"]
-            print("It is "+weather.lookup_by_location(place).condition()['text']+" at "+place)
+            if(weather.lookup_by_location(response["entities"][0]["value"])==None): 
+                print("Enter a name of some city")
+            else:
+                place=response["entities"][0]["value"]
+                print("It is "+weather.lookup_by_location(place).condition()['text']+" at "+place)
         elif(type=="humidity"):
             place=response["entities"][0]["value"]
-            print("The humidity is "+weather.lookup_by_location(place).atmosphere()['humidity']+" at "+place)
-        elif(type=="general"):
-            place=response["entities"][0]["value"]
-            if "thunder" in weather.lookup_by_location(place).condition()['text'].lower() or "showers" in weather.lookup_by_location(place).condition()['text'].lower() or "breezy" in weather.lookup_by_location(place).condition()['text'].lower() or "windy" in weather.lookup_by_location(place).condition()['text'].lower() or "cloudy" in weather.lookup_by_location(place).condition()['text'].lower() or "rain" in weather.lookup_by_location(place).condition()['text'].lower() or "snow" in weather.lookup_by_location(place).condition()['text'].lower() or int(weather.lookup_by_location(place).condition()['temp'])<55:
-                conclusion="you need one"
+            if(weather.lookup_by_location(response["entities"][0]["value"])==None): 
+                print("Enter a name of some city")
             else:
-                conclusion="you don't need one"
-            print("It is "+weather.lookup_by_location(place).condition()['text']+" at "+place+", Hence "+conclusion)
-
+                place=response["entities"][0]["value"]
+                print("The humidity is "+weather.lookup_by_location(place).atmosphere()['humidity']+" at "+place)
+        elif(type=="general"):
+            if(weather.lookup_by_location(response["entities"][0]["value"])==None): 
+                print("Enter a name of some city")
+            else:
+                place=response["entities"][0]["value"]
+                if "thunder" in weather.lookup_by_location(place).condition()['text'].lower() or "showers" in weather.lookup_by_location(place).condition()['text'].lower() or "breezy" in weather.lookup_by_location(place).condition()['text'].lower() or "windy" in weather.lookup_by_location(place).condition()['text'].lower() or "cloudy" in weather.lookup_by_location(place).condition()['text'].lower() or "rain" in weather.lookup_by_location(place).condition()['text'].lower() or "snow" in weather.lookup_by_location(place).condition()['text'].lower():
+                    conclusion="you need to"
+                    print("It is "+weather.lookup_by_location(place).condition()['text']+" at "+place+", Hence "+conclusion)
+                else:
+                    if(int(weather.lookup_by_location(place).condition()['temp'])<55):
+                        conclusion=". But the temperature is "+ weather.lookup_by_location(place).condition()['temp']+". Hence you need to"
+                        print("It is "+weather.lookup_by_location(place).condition()['text']+" at "+place+conclusion)
+                    else:
+                        conclusion="you don't need to"
+                        print("It is "+weather.lookup_by_location(place).condition()['text']+" at "+place+", Hence "+conclusion)
         elif(type=="forecast"):
-            place=response["entities"][0]["value"]
-            forecasts=weather.lookup_by_location(place).forecast()
-            conditions=''
-            for f in forecasts:
-                conditions+=(f.text()+',')
-            print("It is going to be "+conditions+" at "+place)
+            if(weather.lookup_by_location(response["entities"][0]["value"])==None): 
+                print("Enter a name of some city")
+            else:
+                place=response["entities"][0]["value"]
+                forecasts=weather.lookup_by_location(place).forecast()
+                conditions=''
+                for f in forecasts:
+                    conditions+=(f.text()+',')
+                print("It is going to be "+conditions+" at "+place)
         else:
             print(response["output"]["text"][0])
     else:
